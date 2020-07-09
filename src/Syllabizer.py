@@ -1,4 +1,5 @@
 from typing import List
+from lark import Lark
 
 class Syllabizer:
     """This class syllabizes words fed into it according to rules it was initiallized with.  Also
@@ -8,12 +9,18 @@ class Syllabizer:
     def __init__(self, rules):
         self._rules = rules
         # using the rules we need to make parsers
-        # need a vowel parser
-        # need a consonant parser
+        grammar = self._make_grammar(rules.syllable_structures, rules.consonants, rules.vowels)
+        self._parser = Lark(grammar)
 
-        # stores every unique syllable ever fed into this 
+        # make the sets that store syllable stats/info
         self._unique_syllables = set()
-        pass
+        self._begining_syllables = set()
+        self._ending_syllables = set()
+        # probally want the following stats
+        # max sylls
+        # min sylls
+        # ave len sylls
+        # std len sylls
 
     def syllabize(self, words = List[str]):
         syllables = []
@@ -26,62 +33,48 @@ class Syllabizer:
             pass
         return syllables
 
-    def _tokenize_phonemes(self, word):
-        # probably done with regex
-        phonemes = []
-        # for each vowel rule
-            # try to make a token
-        # for each consonant rule
-            # try to make a token
+    def _make_grammar(syllable_structures, consonants, vowels) -> str:
+        consonant_str = ""
+        for index, consonant in enumerate(consonants):
+            if index > 0:
+                consonant_str += "| "
+            consonant_str += consonant + "\n"
+            if index != len(consonants) - 1:
+                consonant_str += "\t"
+            
+        vowel_str = ""
+        for index, vowel in enumerate(vowels):
+            if index > 0:
+                consonant_str += "| "
+            vowel_str += vowel + "\n"
+            if index != len(vowels) - 1:
+                vowel_str += "\t"
+
+        grammar = f"""start: word
+        word: syllables
+        ?syllables: syllable
+            | syllables syllable
+        syllable: vowel
+            | consonant vowel
+            | consonant vowel consonant
+        consonant: {consonant_str}
+        vowel: {vowel_str}
+        %import common.WS_INLINE
+        """
+
+        return grammar
+
+    def syllabize(words: List[str]) -> List[List[str]]:
+        output = []
+        for word in words:
+            syllables = []
+            # have to worry about words that dont parse
+            # parse the word
+            # update start, end, and unique sylls
+            # update number stats
+            # append a list of sylls to out
+            pass
         pass
-
-    def _tokenize_syllables(self):
-        # probaly done with not regex because were going from phonemes to syllables
-        # make tokens using every syllable structure
-        # if any phonemes are left, give a warning?
-        pass
-
-
-class Syllable:
-    """Represents a one unit part of a word, and is made up of phonemes"""
-    def __init__(self, nucleus, onset = None, coda = None):
-        self._onset = onset
-        self._nucleus = nucleus
-        self._coda = coda
-        pass
-
-    def __str__(self) -> str:
-        string = ""
-        if self._onset is not None:
-            string += str(self._onset)
-        string += str(self._nucleus)
-        if self._coda is not None:
-            string += str(self._coda)
-        return string
-
-    def __repr__(self):
-        raise NotImplementedError
-
-class Phoneme:
-    """A representation of the smallest unit of sound according to the provided rules.  Both 
-    consonants and vowels inherit from this."""
-    def __init__(self, characters: str, vowel: bool):
-        self._characters = characters
-        self._vowel = vowel
-
-    def __len__(self):
-        return len(self._characters)
-
-    def __str__(self):
-        return self._characters
-
-    @property
-    def vowel(self):
-        return self._characters
-
-    @property
-    def consonant(self):
-        return not self._vowel
 
 
 class Rules:
